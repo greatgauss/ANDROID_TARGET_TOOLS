@@ -1,0 +1,51 @@
+# !/system/bin/sh
+
+echo "$0: Version 1.0 ...."
+
+echo "+++++++++++++++++++++++++++++++++"
+echo "usage: $0 <dongle_type> <ssid> <pwd> <static_ip>"
+echo "WARNING. USE STATIC IP."
+echo "WARNING. ASSUME that netmask is 255.255.255.0."
+echo "WARNING. ASSUME that gatewyay is x.x.x.1 where (x.x.x.0 OR netmask) equals to static_ip."
+echo "+++++++++++++++++++++++++++++++++"
+
+sleep 4
+
+gwc init $1
+
+NETWORKID=`gwc add_network`
+echo "add network $NETWORKID"
+echo "+++++++++++++++++++++++++++++++++"
+gwc status
+echo "WIFI status"
+echo "+++++++++++++++++++++++++++++++++"
+echo "begin scanning ......"
+gwc scan
+
+echo "+++++++++++++++++++++++++++++++++"
+sleep 4
+echo "scan result"
+gwc scan_result
+sleep 4
+echo "+++++++++++++++++++++++++++++++++"
+echo "networkid=$NETWORKID, ssid=[$2] pwd=[$3]"
+echo "SSID=$1 PWD=$2"
+gwc set_network $NETWORKID ssid '"'$2'"'
+gwc set_network $NETWORKID psk '"'$3'"'
+#gwc set_network 0 key_mgmt NONE
+gwc status
+
+echo "Connecting to $2 ......"
+gwc select_network $NETWORKID 
+ndc interface setcfg wlan0  $4 24
+ndc network destroy 100
+sleep 2 
+ndc network create 100
+ndc network interface add 100 wlan0
+IP_ADDR_MASKED=`echo $4 | awk  -F. '{ print $1"."$2"." $3"."0 }' `
+GATEWAY=`echo $4 | awk  -F. '{ print $1"."$2"." $3"."1 }' `
+ndc network route add 100 wlan0 $IP_ADDR_MASKED/24
+ndc network route add 100 wlan0 0.0.0.0/0 $GATEWAY 
+ndc network default set 100
+ndc resolver setnetdns 100 "" 8.8.8.8 8.8.4.4
+

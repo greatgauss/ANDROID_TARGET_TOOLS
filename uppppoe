@@ -1,0 +1,7 @@
+# !/system/bin/sh
+killall com.droidlogic.PPPoE
+am start -n com.droidlogic.PPPoE/.PPPoEActivity
+input keyevent 22
+input keyevent 22
+input keyevent 22
+input keyevent 66

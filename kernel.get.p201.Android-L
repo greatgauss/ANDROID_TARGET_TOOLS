@@ -1,0 +1,16 @@
+# !/system/bin/sh
+mount -o remount /
+
+if [ ! -d /tmp ]; then
+mkdir /tmp
+fi
+
+if [  -f /tmp/boot.img ]; then
+rm /tmp/boot.img
+fi
+
+wget ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/l-amlogic/out/target/product/p201/boot.img -O /tmp/boot.img 
+sleep 2
+cat /tmp/boot.img > /dev/block/boot
+sleep 2
+sync

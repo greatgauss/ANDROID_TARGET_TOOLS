@@ -1,0 +1,43 @@
+# !/system/bin/sh
+killall logcat; logcat -c; 
+
+logcat -v time BesTV_Config:s \
+MediaPlayerService:s \
+AudioCache:s \
+TXMANAGER_JNI:s \
+Vector:s \
+ActivityManager:s \
+ContextImpl:s \
+net.sunniwell.service.xmpp.chinamobile.XmppTool:s \
+FileObserver:s \
+UploadCheckLog:s \
+StunService:s \
+HttpSoapOption:s \
+tr_jni:s \
+DEVICE:s \
+dalvikvm:s \
+ethernet:s \
+pppoe:s \
+AndroidRuntime:s \
+SWIME:s \
+WindowManager:s \
+com.duolebo.tools.shcmcc.disgnose.Tools:s \
+PowerManagerService:s \
+UserProvoider:s \
+ModuleServiceMgr:s \
+AuthenProxy:s \
+LogUploadMgr:s \
+AlwaysService:s \
+chromium:s \
+ConnectivityService:s \
+Subscribe:s \
+LogFileUtils:s \
+System.err:s \
+Daemon:s \
+DiscoveryOption:s \
+LogUploadHandlerThread:s \
+dalvikvm-heap:s \
+System.out:s \
+SystemLogService:s \
+WIMO_TAG:s \
+&

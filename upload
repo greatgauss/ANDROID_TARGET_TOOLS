@@ -1,0 +1,5 @@
+# !/system/bin/sh
+
+basename=`echo $1 | awk -F/ '{ print $NF }'`
+
+curl -T $1 ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/$basename.`date | awk  '{ print $4}' | sed 's/\:/./g'`

@@ -1,0 +1,19 @@
+#!/system/bin/sh
+
+check_ip=`echo $1 | awk -F. 'NF==4 { for(i=1;i<=NF;i++) if(($i>255)||($i !~ /^[0-9]*$/)||($i ~ /^$/)) {print "Invalid";next}; print "OK" } NF!=4 {print  "Invalid"}'`
+
+if [ $check_ip == "OK" ]
+then      
+    ip_addr=$1
+else
+    ip_addr=`dns $1 | head -n 1`
+fi
+
+if [ "abc"$ip_addr == "abc" ]
+then
+    echo "Invalid IP or domain name"
+    exit
+fi
+
+echo ip_addr=$ip_addr
+echo $ip_addr| awk -F . '{printf("0x%02X%02X%02X%02X\n", $1, $2, $3, $4)}' >/proc/sys/net/ipv4/debug_ip_filter_dst_ip

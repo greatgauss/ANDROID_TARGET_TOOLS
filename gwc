@@ -1,0 +1,97 @@
+# !/system/bin/sh
+
+usage()
+{
+		MYNAME=`basename $0`
+    echo "gwc: greatgauss simple wpa_cli from greatgauss" >&2
+    echo "usage:" >&2
+    echo "$MYNAME" >&2
+    echo "    cat /data/misc/wifi/wpa_supplicant.conf" >&2
+    echo "$MYNAME vi" >&2
+    echo "    vi /data/misc/wifi/wpa_supplicant.conf" >&2
+    echo "$MYNAME init <dongle_type>" >&2
+    echo "    rmmod and insmod for wifi dongle; restart wpa_supplicant" >&2
+    echo "$MYNAME <arg1> {<arg2>} {<arg3>}" >&2
+    echo "    wpa_cli -p/data/misc/wifi/sockets -iwlan0 <arg1> {<arg2>} {<arg3>}" >&2
+
+    exit 1
+}
+
+if [ $# = 0 ]; then
+	cat /data/misc/wifi/wpa_supplicant.conf
+	exit 0
+fi
+
+if [ $1 = help ]; then
+	usage
+	exit 0
+fi 
+
+if [ $1 = vi ]; then
+	vi /data/misc/wifi/wpa_supplicant.conf
+	exit 0
+fi 
+
+if [ $1 = init ]; then
+	if [ $# -ne 2 ]; then
+		usage
+		exit 0
+	fi 
+
+	WIFILIB=$2
+	echo "wifi dongle type: $2"
+
+
+	rmmod $WIFILIB 
+
+	if [ $WIFILIB = "dhd" ]; then
+		insmod /system/lib/$WIFILIB.ko firmware_path=/etc/wifi/4356/fw_bcm4356a2_ag.bin nvram_path=etc/wifi/4356/nvram_ap6356.txt
+	elif [ $WIFILIB = "8189es" ]; then
+		insmod /system/lib/$WIFILIB.ko
+	fi
+
+	lsmod
+
+	ps | grep wpa_supplicant
+
+	#setprop ctl.stop wpa_supplicant
+	#setprop ctl.start wpa_supplicant
+	echo "Start wpa_supplicant ...."
+	killall wpa_supplicant
+	wpa_supplicant \
+		-iwlan0 \
+		-Dnl80211 \
+		-c/data/misc/wifi/wpa_supplicant.conf \
+		-e/data/misc/wifi/entropy.bin \
+		-O/data/misc/wifi/sockets &
+
+	sleep 2
+	echo ""
+	ps | grep wpa_supplicant
+	exit 0
+fi 
+
+if [ $# = 1 ]; then
+	#wpa_cli -p/dev/socket -iwpa_wlan0 $1
+	wpa_cli -p/data/misc/wifi/sockets -iwlan0 $1
+	echo ""                                   
+	exit 0                                         
+fi
+
+if [ $# = 2 ]; then
+	#wpa_cli -p/dev/socket -iwpa_wlan0 $1 "$2"
+	wpa_cli -p/data/misc/wifi/sockets -iwlan0 $1 "$2"
+	echo "" 
+	exit 0  
+fi
+
+if [ $# = 3 ]; then
+	#wpa_cli -p/dev/socket -iwpa_wlan0 $1 "$2" "$3"
+	wpa_cli -p/data/misc/wifi/sockets -iwlan0 $1 "$2" "$3"
+	echo "" 
+	exit 0                                   
+fi  
+
+#wpa_cli -p/dev/socket -iwpa_wlan0 $1 "$2" "$3" "$4"
+wpa_cli -p/data/misc/wifi/sockets -iwlan0 $1 "$2" "$3" "$4"
+

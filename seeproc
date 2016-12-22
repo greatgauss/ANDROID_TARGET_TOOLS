@@ -1,0 +1,63 @@
+#!/system/bin/sh
+
+usage() {
+    MYNAME=`basename $0`
+    echo "show proc node info"
+    echo "usage:"
+    echo "$MYNAME <directory>"
+    echo "$MYNAME -r <directory>"
+
+    exit 1
+}
+
+CAT_NODE() {
+    if [ -f $1 -a \
+         $1 != "/proc/kallsyms" -a \
+         $1 != "/proc/kmsg" -a \
+         $1 != "/proc/kpagecount" -a \
+         $1 != "/proc/kpageflags" -a \
+         $1 != "/proc/timer_list" -a \
+         $1 != "/proc/sched_debug" -a \
+         $1 != "/proc/vmstat" -a \
+         $1 != "/proc/crypto" -a \
+         $1 != "/proc/iomem" -a \
+         $1 != "/proc/slabinfo" -a \
+         $1 != "/proc/vmallocinfo" ]; then
+            LINE=$(cat $1| wc -l)  
+            if [ $LINE == "1" ]; then
+                echo $1 ==== `cat $1` 
+            else 
+                echo $1 ==== 
+                #SHOULD NOT be as: echo `cat $1`
+                #It will discard NEW LINE Character.
+                echo "`cat $1`"
+            fi            
+    fi                                       
+}
+
+search(){
+    for file in ` ls $1 `
+    do
+        CAT_NODE $1"/"$file
+    done
+}
+
+search_recurisve(){
+    for file in ` ls $1 `
+    do
+        if [ -d $1"/"$file ]
+        then
+             search_recurisve $1"/"$file
+        else
+             CAT_NODE $1"/"$file
+        fi
+    done
+}
+
+if [ $# = 1 ]; then
+    search $1
+elif [ $# = 2 -a $1 = "-r" ]; then
+    search_recurisve $2 
+else
+    usage
+fi

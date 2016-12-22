@@ -1,0 +1,7 @@
+# !/system/bin/sh
+
+#echo 0 >/proc/sys/kernel/printk
+
+echo 1 > /sys/class/remount/need_remount
+mount -o remount /system
+

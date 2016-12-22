@@ -1,0 +1,102 @@
+COUNT=0
+PINGCOUNT=3
+LOG=/data/netmon
+IS_ANDROID_L=$(getprop ro.build.fingerprint | grep 5.1.1|wc -l)
+
+if [ -f $LOG ]; then 
+    rm $LOG
+fi
+
+OLD_PID=`getprop net.netmon.pid`
+
+if [ xxx$OLD_PID != xxx"" ]; then
+    kill $OLD_PID
+    echo "$$: kill $OLD_PID"
+fi
+
+echo "$$: BEGIN NETMON(version 2.0) ......" >> $LOG
+if [ $IS_ANDROID_L != "1" ]; then
+    ETH_ON=`sqlite3 /data/data/com.android.providers.settings/databases/settings.db 'select * from secure where name="eth_on"'| awk -F'|' '{ print $3 }'`
+    if [ $ETH_ON == "2" ]; then
+        echo "ethernet is enabled" >> $LOG
+    else
+        if [ $ETH_ON == "1" ]; then
+            echo "ethernet is disabled" >> $LOG
+            exit
+        else
+            echo "ethernet is unknown($ETH_ON)" >> $LOG
+            exit
+        fi
+    fi 
+
+    ETH_CONN_MODE=`sqlite3 /data/data/com.android.providers.settings/databases/settings.db 'select * from secure where name="eth_mode"'| awk -F'|' '{ print $3 }'`
+    if [ $ETH_CONN_MODE == "dhcp" ]; then
+        echo "ethernet mode is DHCP" >> $LOG
+    else
+        if [ $ETH_CONN_MODE == "manual" ]; then
+            echo "ethernet mode is STATIC" >> $LOG
+            exit
+        else
+            echo "ethernet mode is unknown" >> $LOG
+            exit
+        fi
+    fi
+fi
+
+setprop net.netmon.pid $$
+echo "$$: net.netmon.pid is `getprop net.netmon.pid`" >> $LOG
+
+reset_ethernet() {
+    netcfg eth0 down
+    sleep 1
+    netcfg eth0 up
+    sleep 5 
+}
+
+while [ "gkj" != "GKJ" ]; do
+    sleep 0.8
+    address=$(netcfg| grep eth0 | awk  '{ print $3}'|awk  -F / '{ print $1}' )
+    if [ $address == "0.0.0.0" ];
+    then
+        echo "$$: $(date): IP NOT configured, TRY RESET ethernet" >> $LOG
+        echo 7 >/proc/sys/kernel/printk
+        dmesg | tail -n 200 >> $LOG
+        reset_ethernet 
+    else
+        #echo "IP Configured"
+        if [ xxx$gateway == xxx"" ]; then
+            if  [ $IS_ANDROID_L != "1" ]; then
+                gateway=$(ip route | grep default | grep eth0 | head -1 | awk '{ print $3}' )
+            else
+                gateway=$(ip route show table eth0 | grep default | grep eth0 | head -1 | awk '{ print $3}' )
+            fi
+        fi
+
+        count=0
+        if [ xxx$gateway != xxx"" ]; then
+            count=$(ping -i 1 -c $PINGCOUNT $gateway | grep 'received' | awk -F',' '{ print $2 }' | awk '{ print $1 }')
+        fi
+
+        if [ $count -eq 0 ]; then
+            # 100% failed
+            echo "$$: ethernet is down (ping $gateway failed) at $(date), TRY RESET ethernet" >> $LOG
+            echo d > /sys/class/ethernet/phyreg
+            echo 7 >/proc/sys/kernel/printk
+            dmesg | tail -n 200 >> $LOG
+            reset_ethernet 
+        fi
+    fi
+
+    COUNT=`expr $COUNT + 1`
+    if [ "$((COUNT % 20))" -eq 0 ]; then
+        echo "$$: NETWORK INFO at $(date):" >> $LOG
+        echo "ip route:" >> $LOG
+        ip route >> $LOG
+        echo "netcfg:" >> $LOG
+        netcfg | grep eth0 >> $LOG
+        echo "dumpsys connectivity:" >> $LOG
+        dumpsys connectivity | grep thernet>> $LOG
+        echo "\n">> $LOG
+    fi
+done
+

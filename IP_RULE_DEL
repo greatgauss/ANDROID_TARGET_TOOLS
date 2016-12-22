@@ -1,0 +1,6 @@
+# !/system/bin/sh
+for item in $@ 
+do
+ip rule del pref $item
+done
+
