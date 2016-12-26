@@ -1,0 +1,27 @@
+# !/system/bin/sh
+usage()
+{
+    echo "download file" >&2
+    echo "usage:`basename $0` [filename]" >&2
+    exit 1
+}
+
+if [ $# -ne 1 ];then
+    usage
+fi
+
+mv $1 $1.bak
+BOARDNAME=`getprop ro.product.board`
+ANDROID_VER=`getprop ro.build.version.release`
+if [ $ANDROID_VER = "4.4.2" ]; then
+    ANDROID_NAME="kk-amlogic"
+elif [ $ANDROID_VER = "6.0.1" ]; then
+    ANDROID_NAME="m-amlogic"
+elif [ $ANDROID_VER = "5.1.1" ]; then
+    ANDROID_NAME="l-amlogic"
+#elif [ $ANDROID_VER = "5.1.1" ]; then
+fi
+
+wget ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/${ANDROID_NAME}/out/target/product/${BOARDNAME}/$1 -O $1 
+echo "downloaded ${ANDROID_NAME}/out/target/product/${BOARDNAME}$1"
+chmod 644 $1

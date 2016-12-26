@@ -1,4 +1,0 @@
-# !/system/bin/sh
-mv  $1 $1.bak
-wget ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/kk-amlogic-gxb/out/target/product/p201_iptv/$1 -O $1 
-chmod 644 $1

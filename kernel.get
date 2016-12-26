@@ -1,0 +1,26 @@
+# !/system/bin/sh
+mount -o remount /
+
+if [ ! -d /tmp ]; then
+mkdir /tmp
+fi
+
+if [  -f /tmp/boot.img ]; then
+rm /tmp/boot.img
+fi
+
+BOARDNAME=`getprop ro.product.board`
+ANDROID_VER=`getprop ro.build.version.release`
+if [ $ANDROID_VER = "4.4.2" ]; then
+    ANDROID_NAME="kk-amlogic"
+elif [ $ANDROID_VER = "6.0.1" ]; then
+    ANDROID_NAME="m-amlogic"
+elif [ $ANDROID_VER = "5.1.1" ]; then
+    ANDROID_NAME="l-amlogic"
+fi
+
+wget ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/${ANDROID_NAME}/out/target/product/${BOARDNAME}/boot.img -O /tmp/boot.img 
+sleep 2
+cat /tmp/boot.img > /dev/block/boot
+sleep 2
+sync

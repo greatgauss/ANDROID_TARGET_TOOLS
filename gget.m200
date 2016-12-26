@@ -1,4 +1,0 @@
-# !/system/bin/sh
-rm -fr $1
-wget ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/kk-amlogic/out/target/product/m200/$1 -O $1 
-chmod 644 $1
