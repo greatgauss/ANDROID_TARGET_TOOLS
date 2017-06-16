@@ -1,0 +1,101 @@
+#!/system/bin/sh
+usage()
+{
+        echo " Net Emulator.(rate limit; delay and jitter; loss)" >&2
+
+        echo "usage: `basename $0` -a [dut_ipaddr] -r [rate] -d [delay] - j [jitter] -l [loss]" >&2
+        echo "example:" >&2
+        echo "`basename $0` -a 192.168.43.12 -r 1000kbit -d 300ms -j 30ms -l 0.03 " >&2
+        exit 1
+}
+
+ANDROID_VER=`getprop ro.build.version.release`
+if [ $ANDROID_VER = "4.4.2" ]; then
+    INNER_IF="usbnet0"
+elif [ $ANDROID_VER = "5.1.1" ]; then
+    INNER_IF="eth1"
+else
+    echo "Unknown Inner interface for LAN" >&2
+    exit 2
+fi
+
+DELAY=0ms
+JITTER=0ms
+LOSS=0
+RATE=100000kbps
+
+while getopts "a:r:d:j:l:" arg #选项后面的冒号表示该选项需要参数
+do
+        case $arg in
+             a)
+                #echo "ip address: $OPTARG"
+                DUT_IP=$OPTARG
+                ;;
+             r)
+                #echo "rate limit: $OPTARG"
+                RATE=$OPTARG
+                ;;
+             d)
+                #echo "delay: $OPTARG"
+                DELAY=$OPTARG
+                ;;
+             j)
+                #echo "jitter: $OPTARG"
+                JITTER=$OPTARG
+                ;;
+             l)
+                #echo "loss: $OPTARG"
+                LOSS=$OPTARG
+                ;;
+             ?) #当有不认识的选项的时候arg为?
+                echo "unkown argument"
+                exit 1
+                ;;
+        esac
+done
+
+if [ x$DUT_IP = x"" ]; then
+echo "DUT(Device Under Test) IP unknown"
+usage
+fi
+
+echo "############################################"
+echo RATE=${RATE} DELAY=${DELAY} JITTER=${JITTER} LOSS=${LOSS}
+echo "############################################"
+echo ""
+
+tc qdisc del dev ${INNER_IF} root
+tc qdisc add dev ${INNER_IF} root handle 1: htb
+tc class replace dev ${INNER_IF} parent 1: classid 1:1 htb rate 100000kbps ceil 100000kbps burst 32
+
+iptables -t mangle -A FORWARD -o ${INNER_IF} -p tcp -d ${DUT_IP}  -j MARK --set-mark 8069
+iptables -t mangle -A FORWARD -o ${INNER_IF} -p tcp -d ${DUT_IP}  -j RETURN
+iptables -t mangle -A OUTPUT  -p tcp -d ${DUT_IP}  -j MARK --set-mark 8069
+iptables -t mangle -A OUTPUT  -p tcp -d ${DUT_IP}  -j RETURN
+
+iptables -t mangle -A FORWARD -o ${INNER_IF} -p icmp -d ${DUT_IP}  -j MARK --set-mark 8069
+iptables -t mangle -A FORWARD -o ${INNER_IF} -p icmp -d ${DUT_IP}  -j RETURN
+iptables -t mangle -A OUTPUT  -p icmp -d ${DUT_IP}  -j MARK --set-mark 8069
+iptables -t mangle -A OUTPUT  -p icmp -d ${DUT_IP}  -j RETURN
+
+tc filter del dev ${INNER_IF} prio 6102 
+
+tc filter replace dev ${INNER_IF} parent 1: prio 6102 protocol ip handle 8069 fw flowid 1:8069 
+
+tc class replace dev ${INNER_IF} parent 1:1 classid 1:8069 htb rate ${RATE} ceil ${RATE} burst 1032.0
+
+tc qdisc del dev ${INNER_IF} parent 1:8069 
+tc qdisc add dev ${INNER_IF} parent 1:8069  netem delay ${DELAY} ${JITTER} loss ${LOSS}%
+
+echo "" 
+echo tc qdisc ls dev ${INNER_IF}
+tc qdisc ls dev ${INNER_IF}
+
+echo "" 
+echo tc filter ls dev ${INNER_IF}
+tc filter ls dev ${INNER_IF}
+
+echo "" 
+echo tc class ls dev ${INNER_IF}
+tc class ls dev ${INNER_IF}
+
