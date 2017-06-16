@@ -1,0 +1,31 @@
+# !/system/bin/sh
+
+usage()
+{
+    echo "Add channel in StreamingMediaPlayer-1.1.1.apk" >&2
+    echo "usage: `basename $0` [channel]" >&2
+    exit 1
+}
+
+if [ $# -ne 1 ];then
+    usage
+fi
+
+CHANNEL=$1
+
+input keyevent 82
+input keyevent 66
+
+#hide keypad
+sleep 1
+input keyevent 111
+
+input text CH$CHANNEL
+input keyevent 20
+input text http://10.68.7.171/bug_141888/edge/ch$CHANNEL/playlist.m3u8
+input keyevent 20
+input keyevent 20
+input keyevent 66
+
+
+

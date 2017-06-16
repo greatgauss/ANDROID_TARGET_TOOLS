@@ -1,0 +1,17 @@
+# !/system/bin/sh
+usage()
+{
+    echo "download file from HFS Http Server to U Disk" >&2
+    echo "usage:`basename $0` [file]" >&2
+    exit 1
+}
+
+if [ $# -ne 1 ];then
+    usage
+fi
+
+basename=`echo $1 | awk -F/ '{ print $NF }'`
+cmd="wget $1 -O /storage/0000-0000/$basename" 
+echo $cmd
+
+`$cmd`

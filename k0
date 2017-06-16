@@ -1,0 +1,5 @@
+# !/system/bin/sh
+echo "/proc/sys/kernel/printk: `cat /proc/sys/kernel/printk`"
+echo 0 >/proc/sys/kernel/printk
+echo "/proc/sys/kernel/printk: `cat /proc/sys/kernel/printk`"
+

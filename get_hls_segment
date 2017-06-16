@@ -1,0 +1,30 @@
+# !/system/bin/sh
+#BASEURL="http://80.90.80.26/edge/amlst:ch38"
+#BASEURL="http://80.90.80.26/edge/amlst:ch39"
+#BASEURL="http://80.90.80.26/edge/amlst:ch4"
+#BASEURL="http://80.90.80.26/edge/amlst:ch19"
+if [ $# -ne 1 ];then
+  echo "usage:`basename $0` [url]"
+  exit 1
+fi
+
+BASEURL=$1
+
+#TIME=`date | awk  '{ print $4}' | sed 's/\:/./g'`
+
+MASTERM3U8=playlist.m3u8
+wget -q $BASEURL/$MASTERM3U8 -O $MASTERM3U8
+echo "MASTER M3U8 File:"
+cat $MASTERM3U8
+
+SLAVEM3U8=`cat $MASTERM3U8| grep chunk`
+wget -q $BASEURL/$SLAVEM3U8 -O $SLAVEM3U8
+echo ""
+echo "SLAVE M3U8 File:" 
+cat $SLAVEM3U8
+
+cat $SLAVEM3U8 | grep media  | \
+while read LINE
+do
+  wget --no-clobber $BASEURL/$LINE & 
+done

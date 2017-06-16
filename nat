@@ -1,0 +1,71 @@
+# !/system/bin/sh
+
+usage(){         
+    MYNAME=`basename $0`                      
+    echo "Enable/Disable NAT"                 
+    echo "usage:"                             
+    echo "$MYNAME [-e | -d]"                            
+    echo "$MYNAME [-e | -d] [up_interface] [down_interface]"
+    exit                           
+}                                  
+WAN_INTERFACE=eth0         
+                                              
+ANDROID_VER=`getprop ro.build.version.release`
+                                              
+if [ $ANDROID_VER = "4.4.2" ]; then
+    LAN_INTERFACE=usbnet0         
+else                        
+    LAN_INTERFACE=eth1     
+fi                          
+                                                   
+if [ $# = 0 ]; then 
+usage                                          
+fi                                                 
+                                                         
+if [ $1 != "-d" -a $1 != "-e" ]; then                    
+    usage                                                
+fi                                                       
+
+if [ $# = 3 ]; then
+WAN_INTERFACE=$2
+LAN_INTERFACE=$3
+fi
+
+nat_enable () {
+ndc interface setcfg ${LAN_INTERFACE} 192.168.43.1 24 up
+
+if [ $ANDROID_VER != "4.4.2" ]; then
+ip route add table local 192.168.43.0/24 dev ${LAN_INTERFACE}  proto static  scope link
+fi
+
+#echo 1 >/proc/sys/net/ipv4/ip_forward
+ndc ipfwd enable
+
+#Run dnsmasq as dhcp server
+ndc tether start \
+	192.168.42.2 192.168.42.254 \
+	192.168.43.2 192.168.43.254 \
+	192.168.44.2 192.168.44.254 \
+	192.168.45.2 192.168.45.254 \
+	192.168.46.2 192.168.46.254 \
+	192.168.47.2 192.168.47.254 \
+	192.168.48.2 192.168.48.254
+
+ndc nat enable ${LAN_INTERFACE} ${WAN_INTERFACE} 1 192.168.43.0/24
+
+ndc tether dns set 10.68.11.59 10.28.11.63
+}
+
+nat_disable() {
+ndc interface setcfg ${LAN_INTERFACE} 0.0.0.0 0
+ndc nat disable ${LAN_INTERFACE} ${WAN_INTERFACE} 1 192.168.43.0/24
+ndc tether stop 
+ndc ipfwd disable
+}
+
+if [ $1 == "-e" ]; then
+nat_enable                    
+else
+nat_disable                    
+fi
+

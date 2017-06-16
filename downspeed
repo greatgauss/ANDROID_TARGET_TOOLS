@@ -1,0 +1,11 @@
+begin=`date +%s`
+wget ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/bigfile_for_test/$1 -O /dev/null 2&> ./wget_statistics
+end=`date +%s`
+filesize=`cat ./wget_statistics | grep  null | awk -F\| '{ print $NF }'|awk  '{ print $1 }'`
+filesize=${filesize%M}
+
+downloadspeed=`awk 'BEGIN{print " '$filesize' " / (" '$end' " - " '$begin' " ) }'`
+
+echo "Filesize :" ${filesize}M
+echo "Totaltime:" `expr $end - $begin `s
+echo "downspeed: $downloadspeed" "Mbit/s"

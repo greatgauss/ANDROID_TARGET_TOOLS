@@ -1,0 +1,23 @@
+# !/system/bin/sh
+
+usage()
+{
+    echo "Delete channels in StreamingMediaPlayer-1.1.1.apk" >&2
+    echo "usage: `basename $0` [count]" >&2
+    exit 1
+}
+
+if [ $# -ne 1 ];then
+    usage
+fi
+
+
+delete_one_channel(){
+input keyevent 82
+input keyevent 20
+input keyevent 66
+input keyevent 66
+}
+
+for i in `seq $1`; do delete_one_channel; done
+

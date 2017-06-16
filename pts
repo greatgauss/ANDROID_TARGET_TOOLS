@@ -1,0 +1,49 @@
+# !/system/bin/sh
+
+usage() {
+    MYNAME=`basename $0`
+    echo "usage:"
+    echo "$MYNAME"
+    echo "$MYNAME dbg"
+    echo "$MYNAME a [0|1]"
+    echo "$MYNAME v [0|1]"
+    echo "$MYNAME in [0|1]"
+    echo "$MYNAME out [0|1]"
+
+    exit 1
+}
+
+show_pts_debug() {
+    cat /sys/class/tsync/debug_pts_checkin 
+    cat /sys/class/tsync/debug_pts_checkout 
+    cat /sys/class/tsync/debug_audio_pts
+    cat /sys/class/tsync/debug_video_pts
+}
+
+if [ $# = 0 ]; then
+    cat /sys/class/tsync/pts_audio | awk '{printf("AudioPTS: 0x%08x: %08d\n", $0, $0)}'
+    cat /sys/class/tsync/pts_video | awk '{printf("VideoPTS: 0x%08x: %08d\n", $0, $0)}'
+    cat /sys/class/tsync/pts_pcrscr| awk '{printf("pcrscr  : 0x%08x: %08d\n", $0, $0)}'
+    exit
+fi
+
+if [ $# = 1 ]; then
+if [ $1 = "dbg" ]; then
+   show_pts_debug
+else
+   usage
+fi
+exit
+fi
+
+if [ $# = 2 -a $1 = "v" ]; then
+    echo $2 > /sys/class/tsync/debug_video_pts
+elif [ $# = 2 -a $1 = "a" ]; then
+    echo $2 > /sys/class/tsync/debug_audio_pts
+elif [ $# = 2 -a $1 = "in" ]; then
+    echo $2 > /sys/class/tsync/debug_pts_checkin
+elif [ $# = 2 -a $1 = "out" ]; then
+    echo $2 > /sys/class/tsync/debug_pts_checkout
+fi
+
+show_pts_debug

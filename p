@@ -15,5 +15,13 @@ if [ $# -ne 1 ];then
     usage
 fi
 
-am start -n com.android.gallery3d/com.android.gallery3d.app.MovieActivity -d $1 
-#am start -n com.android.gallery3d/.app.MovieActivity -d $1
+URL=$1
+
+first_char=${URL:0:1}                                                            
+
+if [ $first_char = "/" ];then
+   URL="file:///"$URL 
+fi
+
+am start -n com.android.gallery3d/com.android.gallery3d.app.MovieActivity -d $URL 
+#am start -n com.android.gallery3d/.app.MovieActivity -d $URL

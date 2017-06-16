@@ -1,0 +1,19 @@
+# !/system/bin/sh
+usage()
+{
+    echo "upload file by calling socat" >&2
+    echo "usage:`basename $0` [filepath]" >&2
+    exit 1
+}
+
+if [ $# -ne 1 ];then
+    usage
+fi
+
+if [ ! -f /system/bin/socat ]; then
+echo "socat not installed" >&2
+exit 2 
+fi
+
+socat -u open:$1 tcp-listen:9000
+md5sum $1

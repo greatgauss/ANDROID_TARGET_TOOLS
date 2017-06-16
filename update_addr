@@ -1,19 +1,64 @@
 #!/system/bin/sh
 
-check_ip=`echo $1 | awk -F. 'NF==4 { for(i=1;i<=NF;i++) if(($i>255)||($i !~ /^[0-9]*$/)||($i ~ /^$/)) {print "Invalid";next}; print "OK" } NF!=4 {print  "Invalid"}'`
+usage() {
+    MYNAME=`basename $0`
+    echo "Set: /proc/sys/net/ipv4/debug_ip_filter_src_ip"
+    echo "     /proc/sys/net/ipv4/debug_ip_filter_dst_ip"
+    echo "     /proc/sys/net/ipv4/debug_ip_filter_ip_proto"
+    echo "usage:"
+    echo "    $MYNAME -p [port number|icmp|igmp|tcp|udp]"
+    echo "    $MYNAME -s [Ip OR Name]"
+    echo "    $MYNAME -d [Ip OR Name]"
+
+    exit 1
+}
+
+if [ $# != 2 ]; then
+    usage
+fi
+
+if [ $1 != "-s" -a  $1 != "-d" -a  $1 != "-p" ]; then
+    usage
+fi
+
+if [ $1 == "-s" ]; then
+		NODE_NAME=debug_ip_filter_src_ip
+elif [ $1 == "-d" ]; then
+		NODE_NAME=debug_ip_filter_dst_ip
+else
+		if [ $2 == "icmp" -o $2 == "ICMP" ]; then
+				PROTOCOL=1
+		elif [ $2 == "igmp" -o $2 == "IGMP" ]; then
+				PROTOCOL=2
+		elif [ $2 == "tcp" -o $2 == "TCP" ]; then
+				PROTOCOL=6
+		elif [ $2 == "udp" -o $2 == "UDP" ]; then
+				PROTOCOL=17
+		else
+				PROTOCOL=$2
+		fi
+		
+		echo $PROTOCOL > /proc/sys/net/ipv4/debug_ip_filter_ip_proto
+		exit 2
+fi
+
+
+check_ip=`echo $2 | awk -F. 'NF==4 { for(i=1;i<=NF;i++) if(($i>255)||($i !~ /^[0-9]*$/)||($i ~ /^$/)) {print "Invalid";next}; print "OK" } NF!=4 {print  "Invalid"}'`
 
 if [ $check_ip == "OK" ]
 then      
-    ip_addr=$1
+    ip_addr=$2
 else
-    ip_addr=`dns $1 | head -n 1`
+    ip_addr=`dns $2 | head -n 1`
 fi
 
-if [ "abc"$ip_addr == "abc" ]
+if [ "abc""$ip_addr" == "abc" ]
 then
     echo "Invalid IP or domain name"
     exit
 fi
 
 echo ip_addr=$ip_addr
-echo $ip_addr| awk -F . '{printf("0x%02X%02X%02X%02X\n", $1, $2, $3, $4)}' >/proc/sys/net/ipv4/debug_ip_filter_dst_ip
+echo $ip_addr| awk -F . '{printf("0x%02X%02X%02X%02X\n", $1, $2, $3, $4)}' >/proc/sys/net/ipv4/$NODE_NAME
+
+

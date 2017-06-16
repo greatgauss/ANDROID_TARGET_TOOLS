@@ -1,0 +1,7 @@
+# !/system/bin/sh
+setprop service.adb.tcp.port 5555; killall adbd
+echo 0 >/proc/sys/kernel/printk
+#killall logcat; logcat -c; logcat -v threadtime SystemControl:s JniHelper:s InputEventConsistencyVerifier:s ActivityManager:s WindowManager:s uninstall:s TXDeviceSDK:s UsageStatsService:s tag_push:s ProcessStatsService:s AlarmManager:s DreamManagerService:s PowerManagerService:s InputMethodManagerService:s &
+
+#echo 1 > /sys/class/remount/need_remount
+mount -o remount,rw /system
