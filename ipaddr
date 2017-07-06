@@ -1,0 +1,18 @@
+# !/system/bin/sh
+usage()
+{
+    echo "ip address of interface" >&2
+    echo "usage:`basename $0` [-4 | -6] [network_interface]" >&2
+    exit 1
+}
+
+if [ $# -ne 2 ];then
+    usage
+fi
+
+if [ $1 != "-4" -a $1 != "-6" ];then
+    usage
+fi
+
+ip $1 addr show $2 | grep inet |  awk  '{print $2}'| awk -F/ '{ print $1}'
+
