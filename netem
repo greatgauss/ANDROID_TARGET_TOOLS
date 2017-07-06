@@ -1,12 +1,27 @@
 #!/system/bin/sh
 usage()
 {
-        echo " Net Emulator.(rate limit; delay and jitter; loss)" >&2
+    echo " Net Emulator.(rate limit; delay and jitter; loss)" >&2
 
-        echo "usage: `basename $0` -a [dut_ipaddr] -r [rate] -d [delay] - j [jitter] -l [loss]" >&2
-        echo "example:" >&2
-        echo "`basename $0` -a 192.168.43.12 -r 1000kbit -d 300ms -j 30ms -l 0.03 " >&2
-        exit 1
+    echo "usage: `basename $0` -a [dut_ipaddr] -r [rate] -d [delay] - j [jitter] -l [loss]" >&2
+    echo "example:" >&2
+    echo "`basename $0` -a 192.168.43.12 -r 1000kbit -d 300ms -j 30ms -l 0.03 " >&2
+    exit 1
+}
+
+tc_show() 
+{
+    echo "" 
+    echo tc qdisc ls dev ${INNER_IF}
+    tc qdisc ls dev ${INNER_IF}
+
+    echo "" 
+    echo tc filter ls dev ${INNER_IF}
+    tc filter ls dev ${INNER_IF}
+
+    echo "" 
+    echo tc class ls dev ${INNER_IF}
+    tc class ls dev ${INNER_IF}
 }
 
 ANDROID_VER=`getprop ro.build.version.release`
@@ -19,6 +34,11 @@ else
     exit 2
 fi
 
+if [ $# = 0 ]; then
+    tc_show
+    exit 2
+fi
+
 DELAY=0ms
 JITTER=0ms
 LOSS=0
@@ -26,37 +46,37 @@ RATE=100000kbps
 
 while getopts "a:r:d:j:l:" arg #选项后面的冒号表示该选项需要参数
 do
-        case $arg in
-             a)
-                #echo "ip address: $OPTARG"
-                DUT_IP=$OPTARG
-                ;;
-             r)
-                #echo "rate limit: $OPTARG"
-                RATE=$OPTARG
-                ;;
-             d)
-                #echo "delay: $OPTARG"
-                DELAY=$OPTARG
-                ;;
-             j)
-                #echo "jitter: $OPTARG"
-                JITTER=$OPTARG
-                ;;
-             l)
-                #echo "loss: $OPTARG"
-                LOSS=$OPTARG
-                ;;
-             ?) #当有不认识的选项的时候arg为?
-                echo "unkown argument"
-                exit 1
-                ;;
+    case $arg in
+        a)
+            #echo "ip address: $OPTARG"
+            DUT_IP=$OPTARG
+            ;;
+        r)
+            #echo "rate limit: $OPTARG"
+            RATE=$OPTARG
+            ;;
+        d)
+            #echo "delay: $OPTARG"
+            DELAY=$OPTARG
+            ;;
+        j)
+            #echo "jitter: $OPTARG"
+            JITTER=$OPTARG
+            ;;
+        l)
+            #echo "loss: $OPTARG"
+            LOSS=$OPTARG
+            ;;
+        ?) #当有不认识的选项的时候arg为?
+            echo "unkown argument"
+            exit 1
+            ;;
         esac
 done
 
 if [ x$DUT_IP = x"" ]; then
-echo "DUT(Device Under Test) IP unknown"
-usage
+    echo "DUT(Device Under Test) IP unknown"
+    usage
 fi
 
 echo "############################################"
@@ -87,15 +107,5 @@ tc class replace dev ${INNER_IF} parent 1:1 classid 1:8069 htb rate ${RATE} ceil
 tc qdisc del dev ${INNER_IF} parent 1:8069 
 tc qdisc add dev ${INNER_IF} parent 1:8069  netem delay ${DELAY} ${JITTER} loss ${LOSS}%
 
-echo "" 
-echo tc qdisc ls dev ${INNER_IF}
-tc qdisc ls dev ${INNER_IF}
-
-echo "" 
-echo tc filter ls dev ${INNER_IF}
-tc filter ls dev ${INNER_IF}
-
-echo "" 
-echo tc class ls dev ${INNER_IF}
-tc class ls dev ${INNER_IF}
+tc_show
 
