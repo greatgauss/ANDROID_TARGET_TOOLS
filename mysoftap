@@ -1,0 +1,31 @@
+# !/system/bin/sh
+
+usage()
+{
+    echo "Start SoftAP" >&2
+    echo "Usage: $(basename $0) [lan_interface] [wan_interface]" >&2
+    exit 1
+}
+
+if [ $# -ne 2 ];then
+    usage
+fi
+
+LAN_INTERFACE=$1
+WAN_INTERFACE=$2
+
+ndc softap start $LAN_INTERFACE
+ndc softap startap
+ndc interface getcfg $LAN_INTERFACE 
+ndc interface setcfg $LAN_INTERFACE 192.168.43.1 24
+ndc ipfwd enable 
+ndc tether start 192.168.42.2 192.168.42.254 \
+                 192.168.43.2 192.168.43.254 \
+                 192.168.44.2 192.168.44.254 \
+                 192.168.45.2 192.168.45.254 \
+                 192.168.46.2 192.168.46.254 \
+                 192.168.47.2 192.168.47.254 \
+                 192.168.48.2 192.168.48.254 
+
+ndc tether dns set 8.8.8.8  8.8.4.4
+ndc nat enable $LAN_INTERFACE $WAN_INTERFACE 1 192.168.43.0/24
