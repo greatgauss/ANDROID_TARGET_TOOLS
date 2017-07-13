@@ -1,12 +1,23 @@
 # !/system/bin/sh
-mount -o remount,rw /
 
-if [ ! -d /tmp ]; then
-mkdir /tmp
+mount -o remount,rw /system
+
+BOOTIMG_DIR=/system/bootimge.tmp
+
+if [ ! -d $BOOTIMG_DIR ]; then
+mkdir $BOOTIMG_DIR 
 fi
 
-if [  -f /tmp/boot.img ]; then
-rm /tmp/boot.img
+if [  -f $BOOTIMG_DIR/boot.img ]; then
+		if [ $# -eq 1 ];then
+				POSTFIX=$1
+		else
+				TIMESTAMP=$(date | awk  '{ print $4}' | awk -F:  '{ printf("%s_%s_%s", $1, $2, $3)}')
+				MD5SUM==$(md5sum boot.img | awk  '{ print $1}')
+				POSTFIX=$TIMESTAMP.$MD5SUM
+		fi
+
+mv $BOOTIMG_DIR/boot.img  $BOOTIMG_DIR/boot.img.$POSTFIX
 fi
 
 BOARDNAME=`getprop ro.product.board`
@@ -21,8 +32,10 @@ elif [ $ANDROID_VER = "7.1.1" ]; then
     ANDROID_NAME="n-amlogic-iptv-gxl"
 fi
 
-wget ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/${ANDROID_NAME}/out/target/product/${BOARDNAME}/boot.img -O /tmp/boot.img 
+URL="ftp://gaokejun:gkj010111@10.68.11.61:56789/mnt/fileroot/gaokejun/${ANDROID_NAME}/out/target/product/${BOARDNAME}/boot.img"
+echo Get kernel image from $URL
+wget $URL -O $BOOTIMG_DIR/boot.img 
 sleep 2
-cat /tmp/boot.img > /dev/block/boot
+cat $BOOTIMG_DIR/boot.img > /dev/block/boot
 sleep 2
 sync
