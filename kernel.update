@@ -1,0 +1,17 @@
+# !/system/bin/sh
+
+usage()
+{
+    echo "Update kernel image." >&2
+    echo "Usage: $(basename $0) [imagefile]" >&2
+    exit 1
+}
+
+if [ $# -ne 1 ];then
+    usage
+fi
+
+
+cat $1 > /dev/block/boot
+sleep 2
+sync
