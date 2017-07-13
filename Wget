@@ -1,0 +1,17 @@
+# !/system/bin/sh
+usage()
+{
+    echo "same as to wget. but -O option is no more given." >&2
+    echo "Usage: $(basename $0) [URL]" >&2
+    exit 1
+}
+
+if [ $# -ne 1 ];then
+    usage
+fi
+
+MYURL=$1
+COMMAND="wget $MYURL -O $(basename $MYURL)"
+
+echo $COMMAND
+$COMMAND
